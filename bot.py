@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 import random
 import csv
 import datetime
-from zoneinfo import ZoneInfo  # Requires Python 3.9+
+from backports.zoneinfo import ZoneInfo  
 
 # Load environment variables
 load_dotenv()
