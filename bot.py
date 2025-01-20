@@ -12,8 +12,11 @@ load_dotenv()
 CHANNEL_ID = 801236490524164137  
 BOT_TOKEN = os.getenv('BINKY_BOT_TOKEN')
 
-# Initialize the bot (using commands.Bot for future extensibility)
-bot = commands.Bot(command_prefix='binky!')
+
+intents = discord.Intents.default()
+intents.message_content = True
+intents.reactions = True
+bot = commands.Bot(command_prefix='binky!', intents=intents)
 
 # Load quotes from ndnws.txt
 with open('ndnws.txt', 'r', encoding='utf-8') as f:
