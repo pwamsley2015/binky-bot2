@@ -40,7 +40,8 @@ async def daily_message():
     chosen_emojis = ''.join(random.choices(emojis, k=4))
 
     # Send the message
-    await channel.send(f"{quote} {chosen_emojis}")
+    await channel.send(f"{quote}")
+    await channel.send(f"{chosen_emojis}")
 
 @bot.event
 async def on_ready():
