@@ -114,5 +114,9 @@ async def show_standings(ctx):
         else:
             await ctx.send("No activity recorded yet this week!")
 
+@bot.command(name='noslop')
+async def noslop(ctx):
+    await ctx.send("hey")
+
 # Run the bot
 bot.run(BOT_TOKEN)
