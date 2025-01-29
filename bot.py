@@ -12,7 +12,7 @@ from discord.ext import commands, tasks
 from backports.zoneinfo import ZoneInfo
 import random
 import csv
-from datetime import datetime
+import datetime
 from activity_tracker import ActivityTracker
 
 # Load environment variables
