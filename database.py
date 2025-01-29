@@ -87,12 +87,12 @@ class Database:
 
     def _update_user_streak(self, conn: sqlite3.Connection, user_id: int, current_date: date) -> None:
         """Update user's activity streak."""
-        last_active = conn.execute("""
+        result = conn.execute("""
             SELECT last_active FROM users WHERE user_id = ?
         """, (user_id,)).fetchone()
 
-        if last_active:
-            last_active = datetime.strptime(last_active[0], '%Y-%m-%d').date()
+        if result and result[0]:  # Check if we have a last_active date
+            last_active = datetime.strptime(result[0], '%Y-%m-%d').date()
             days_diff = (current_date - last_active).days
             
             if days_diff == 1:  # Consecutive day
@@ -121,16 +121,27 @@ class Database:
         """Get scores for all users for the current week."""
         with sqlite3.connect(self.db_path) as conn:
             return conn.execute("""
-                SELECT u.user_id, u.username, 
-                       COALESCE(SUM(m.points), 0) + 
-                       COALESCE(SUM(r.points), 0) + 
-                       COALESCE(SUM(men.points), 0) AS total_score
-                FROM users u
-                LEFT JOIN messages m ON u.user_id = m.user_id 
-                    AND m.timestamp >= date('now', '-7 days')
-                LEFT JOIN reactions r ON m.message_id = r.message_id
-                LEFT JOIN mentions men ON m.message_id = men.message_id
-                GROUP BY u.user_id, u.username
+                WITH weekly_activity AS (
+                    SELECT u.user_id, 
+                           u.username,
+                           COALESCE(SUM(m.points), 0) as message_points,
+                           COALESCE(SUM(r.points), 0) as reaction_points,
+                           COALESCE(SUM(men.points), 0) as mention_points
+                    FROM users u
+                    LEFT JOIN messages m ON u.user_id = m.user_id 
+                        AND m.timestamp >= datetime('now', '-7 days')
+                    LEFT JOIN reactions r ON u.user_id = r.reactor_id
+                        AND r.timestamp >= datetime('now', '-7 days')
+                    LEFT JOIN mentions men ON u.user_id = men.mentioned_user_id
+                        AND men.timestamp >= datetime('now', '-7 days')
+                    GROUP BY u.user_id, u.username
+                )
+                SELECT 
+                    user_id,
+                    username,
+                    (message_points + reaction_points + mention_points) as total_score
+                FROM weekly_activity
+                WHERE total_score > 0
                 ORDER BY total_score DESC
             """).fetchall()
 
