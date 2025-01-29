@@ -1,6 +1,13 @@
 from dotenv import load_dotenv
 import os
 import logging
+
+# Set up logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+
 import discord
 from discord.ext import commands, tasks
 from backports.zoneinfo import ZoneInfo
@@ -8,12 +15,6 @@ import random
 import csv
 from datetime import datetime
 from activity_tracker import ActivityTracker
-
-# Set up logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
 
 # Load environment variables
 load_dotenv()
