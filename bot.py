@@ -7,7 +7,6 @@ logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
-
 import discord
 from discord.ext import commands, tasks
 from backports.zoneinfo import ZoneInfo
@@ -49,7 +48,7 @@ with open('emojis.csv', 'r', encoding='utf-8') as f:
     reader = csv.reader(f)
     emojis = next(reader)  # Assumes all emojis are on the first line
 
-@tasks.loop(time=datetime.time(hour=5, minute=0, tzinfo=ZoneInfo('America/Los_Angeles')))
+@tasks.loop(time=datetime.time(5, 0, tzinfo=ZoneInfo('America/Los_Angeles')))
 async def daily_message():
     """Task that sends a daily motivational message at 5 AM PT."""
     channel = bot.get_channel(CHANNEL_ID)
@@ -91,6 +90,7 @@ async def on_reaction_add(reaction, user):
 
 # Debug command to check last few tracked activities
 @bot.command(name='debug')
+@commands.is_owner()  # Only you can use this command
 async def debug_info(ctx):
     """Show recent tracking activity."""
     if activity_tracker:
