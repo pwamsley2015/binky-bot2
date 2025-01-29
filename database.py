@@ -14,11 +14,23 @@ class Database:
 
     def _create_tables(self):
         """Create all necessary tables if they don't exist."""
+        # Read schema but split into individual statements
         with open('schema.sql', 'r') as f:
             schema = f.read()
         
         with sqlite3.connect(self.db_path) as conn:
-            conn.executescript(schema)
+            # For each CREATE statement, add IF NOT EXISTS
+            for statement in schema.split(';'):
+                if statement.strip().upper().startswith('CREATE TABLE'):
+                    # Add IF NOT EXISTS clause after CREATE TABLE
+                    modified = statement.replace('CREATE TABLE', 'CREATE TABLE IF NOT EXISTS', 1)
+                    if modified.strip():  # Only execute non-empty statements
+                        conn.execute(modified)
+                elif statement.strip().upper().startswith('CREATE INDEX'):
+                    # Add IF NOT EXISTS clause after CREATE INDEX
+                    modified = statement.replace('CREATE INDEX', 'CREATE INDEX IF NOT EXISTS', 1)
+                    if modified.strip():  # Only execute non-empty statements
+                        conn.execute(modified)
             conn.commit()
 
     def add_user(self, user_id: int, username: str) -> None:
