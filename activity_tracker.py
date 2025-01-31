@@ -164,7 +164,7 @@ class PingManager:
         channel = self.bot.get_channel(self.channel_id)
         
         if channel:
-            await channel.send(f"Hey <@{user_id}>! {question}")
+            await channel.send(f"<@{user_id}>, {question}")
             self.db.record_ping(user_id, question, forced)
     
     @tasks.loop(hours=1)
