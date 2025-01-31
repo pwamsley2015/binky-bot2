@@ -51,6 +51,16 @@ CREATE TABLE weekly_winners (
     FOREIGN KEY (user_id) REFERENCES users(user_id)
 );
 
+-- Table to track member pings
+CREATE TABLE IF NOT EXISTS member_pings (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    timestamp DATETIME NOT NULL,
+    question TEXT NOT NULL,
+    forced BOOLEAN DEFAULT FALSE,  -- Track if it was a manual !ping
+    FOREIGN KEY (user_id) REFERENCES users(user_id)
+);
+
 -- Create indexes for better query performance
 CREATE INDEX idx_messages_user ON messages(user_id);
 CREATE INDEX idx_messages_timestamp ON messages(timestamp);
