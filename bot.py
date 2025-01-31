@@ -13,7 +13,7 @@ from backports.zoneinfo import ZoneInfo
 import random
 import csv
 import datetime
-from activity_tracker import ActivityTracker
+from activity_tracker import ActivityTracker, PingManager
 
 # Load environment variables
 load_dotenv()
@@ -69,10 +69,14 @@ async def on_ready():
     print(f'Logged in as {bot.user} (ID: {bot.user.id})')
     
     # Initialize activity tracker
-    global activity_tracker
+    global activity_tracker, ping_manager
     activity_tracker = ActivityTracker(bot)
     activity_tracker.set_ranked_channels(RANKED_CHANNELS)
     activity_tracker.start_tasks()
+
+    # Initialize ping manager
+    ping_manager = PingManager(activity_tracker.db, bot, CHANNEL_ID)
+    ping_manager.start()
     
     # Start the daily message loop
     daily_message.start()
@@ -113,6 +117,20 @@ async def show_standings(ctx):
             await ctx.send(response)
         else:
             await ctx.send("No activity recorded yet this week!")
+
+@bot.command(name='ping')
+async def force_ping(ctx):
+    """Force Binky to ping someone."""
+    if ping_manager:
+        candidates = ping_manager.db.get_pingable_members()
+        if candidates:
+            selected = random.choice(candidates[:5])
+            await ping_manager.ping_member(selected[0], selected[1], forced=True)
+            await ctx.message.add_reaction('👍')
+        else:
+            await ctx.send("No eligible members to ping right now!")
+    else:
+        await ctx.send("Ping manager not initialized!")
 
 @bot.command(name='noslop')
 async def noslop(ctx):

@@ -1,5 +1,6 @@
 from database import Database
-from datetime import datetime
+from datetime import datetime, timedelta
+from backports.zoneinfo import ZoneInfo
 import discord
 from discord.ext import commands, tasks
 from typing import Set, Dict, List
@@ -86,7 +87,7 @@ class ActivityTracker:
                 # Announce the winner in all ranked channels
                 announcement = (
                     f"🎉 **Weekly Winner Announcement!** 🎉\n\n"
-                    f"Congratulations to **{winner_name}** for being this week's most valuable contributor!\n"
+                    f"Congratulations to **{winner_name}** for being this week's most active contributor!\n"
                     f"Score: {score:.2f} points\n\n"
                     f"Top Contributors:\n"
                 )
@@ -110,3 +111,66 @@ class ActivityTracker:
     def cog_unload(self) -> None:
         """Clean up tasks when cog is unloaded."""
         self.process_weekly_winner.cancel()
+
+
+class PingManager:
+    def __init__(self, db: Database, bot: commands.Bot, channel_id: int):
+        self.db = db
+        self.bot = bot
+        self.channel_id = channel_id
+        self.questions = self._load_questions()
+        self.tz = ZoneInfo('America/Los_Angeles')
+    
+    def _load_questions(self) -> List[str]:
+        """Load questions from questions.txt."""
+        with open('questions.txt', 'r', encoding='utf-8') as f:
+            return [line.strip() for line in f if line.strip()]
+    
+    def _is_active_hours(self) -> bool:
+        """Check if current time is between 9 AM and 10 PM PT."""
+        current_time = datetime.now(self.tz)
+        return 9 <= current_time.hour < 22
+    
+    async def check_and_ping(self) -> None:
+        """Check if we should ping someone and do it if conditions are met."""
+        if not self._is_active_hours():
+            return
+            
+        # Check last activity
+        last_activity = self.db.get_last_activity_time()
+        if not last_activity or datetime.utcnow() - last_activity < timedelta(hours=14):
+            return
+            
+        # Check last ping
+        last_ping = self.db.get_last_ping_time()
+        if last_ping and datetime.utcnow() - last_ping < timedelta(days=7):
+            return
+            
+        # Get candidate members
+        candidates = self.db.get_pingable_members()
+        if not candidates:
+            return
+            
+        # Select from top 5 (or fewer if less available)
+        top_candidates = candidates[:5]
+        selected = random.choice(top_candidates)
+        
+        await self.ping_member(selected[0], selected[1])
+    
+    async def ping_member(self, user_id: int, username: str, forced: bool = False) -> None:
+        """Ping a specific member with a random question."""
+        question = random.choice(self.questions)
+        channel = self.bot.get_channel(self.channel_id)
+        
+        if channel:
+            await channel.send(f"Hey <@{user_id}>! {question}")
+            self.db.record_ping(user_id, question, forced)
+    
+    @tasks.loop(hours=1)
+    async def ping_check_loop(self) -> None:
+        """Regular check for inactivity."""
+        await self.check_and_ping()
+    
+    def start(self) -> None:
+        """Start the ping check loop."""
+        self.ping_check_loop.start()

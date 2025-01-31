@@ -193,3 +193,61 @@ class Database:
                 activities.append(f"Reaction by {username} - {points} points")
             
             return activities[:limit]
+
+####################################### ping member feature
+
+    def get_last_activity_time(self) -> Optional[datetime]:
+    """Get the timestamp of the last message in any channel."""
+    with sqlite3.connect(self.db_path) as conn:
+        result = conn.execute("""
+            SELECT MAX(timestamp)
+            FROM messages
+        """).fetchone()
+        
+        if result and result[0]:
+            return datetime.strptime(result[0], '%Y-%m-%d %H:%M:%S.%f')
+        return None
+
+    def get_last_ping_time(self) -> Optional[datetime]:
+        """Get the timestamp of the last ping sent."""
+        with sqlite3.connect(self.db_path) as conn:
+            result = conn.execute("""
+                SELECT MAX(timestamp)
+                FROM member_pings
+            """).fetchone()
+            
+            if result and result[0]:
+                return datetime.strptime(result[0], '%Y-%m-%d %H:%M:%S.%f')
+            return None
+
+    def get_pingable_members(self) -> List[Tuple[int, str, datetime]]:
+        """Get members who haven't been pinged in 7 days, ordered by last activity."""
+        with sqlite3.connect(self.db_path) as conn:
+            return conn.execute("""
+                WITH LastPings AS (
+                    SELECT user_id, MAX(timestamp) as last_ping
+                    FROM member_pings
+                    GROUP BY user_id
+                ),
+                LastActivity AS (
+                    SELECT user_id, MAX(timestamp) as last_active
+                    FROM messages
+                    GROUP BY user_id
+                )
+                SELECT u.user_id, u.username, COALESCE(la.last_active, '2000-01-01') as last_active
+                FROM users u
+                LEFT JOIN LastPings lp ON u.user_id = lp.user_id
+                LEFT JOIN LastActivity la ON u.user_id = la.user_id
+                WHERE (lp.last_ping IS NULL OR 
+                      lp.last_ping <= datetime('now', '-7 days'))
+                ORDER BY last_active ASC
+            """).fetchall()
+
+    def record_ping(self, user_id: int, question: str, forced: bool = False) -> None:
+        """Record a ping sent to a user."""
+        with sqlite3.connect(self.db_path) as conn:
+            conn.execute("""
+                INSERT INTO member_pings (user_id, timestamp, question, forced)
+                VALUES (?, datetime('now'), ?, ?)
+            """, (user_id, question, forced))
+            conn.commit()
