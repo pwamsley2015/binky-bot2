@@ -197,16 +197,16 @@ class Database:
 ####################################### ping member feature
 
     def get_last_activity_time(self) -> Optional[datetime]:
-    """Get the timestamp of the last message in any channel."""
-    with sqlite3.connect(self.db_path) as conn:
-        result = conn.execute("""
-            SELECT MAX(timestamp)
-            FROM messages
-        """).fetchone()
-        
-        if result and result[0]:
-            return datetime.strptime(result[0], '%Y-%m-%d %H:%M:%S.%f')
-        return None
+        """Get the timestamp of the last message in any channel."""
+        with sqlite3.connect(self.db_path) as conn:
+            result = conn.execute("""
+                SELECT MAX(timestamp)
+                FROM messages
+            """).fetchone()
+            
+            if result and result[0]:
+                return datetime.strptime(result[0], '%Y-%m-%d %H:%M:%S.%f')
+            return None
 
     def get_last_ping_time(self) -> Optional[datetime]:
         """Get the timestamp of the last ping sent."""
