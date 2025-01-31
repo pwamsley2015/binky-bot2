@@ -52,7 +52,7 @@ CREATE TABLE weekly_winners (
 );
 
 -- Table to track member pings
-CREATE TABLE IF NOT EXISTS member_pings (
+CREATE TABLE member_pings (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL,
     timestamp DATETIME NOT NULL,
