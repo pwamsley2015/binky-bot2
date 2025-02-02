@@ -10,6 +10,7 @@ import random
 logger = logging.getLogger('binky.activity')
 
 class ActivityTracker:
+    CHANNEL_ID = 801236490524164137 #goal-check-ins
     def __init__(self, bot: commands.Bot):
         self.bot = bot
         self.db = Database()
@@ -75,6 +76,7 @@ class ActivityTracker:
     @tasks.loop(hours=24)
     async def process_weekly_winner(self) -> None:
         """Process and announce weekly winner. Runs daily but only takes action on Sundays."""
+        logger.info(f"process_weekly_winner() !!! Day: {datetime.utcnow().weekday()}")
         if datetime.utcnow().weekday() == 6:  # Sunday
             scores = self.db.get_weekly_scores()
             if scores:
@@ -97,10 +99,11 @@ class ActivityTracker:
                 for i, (_, name, user_score) in enumerate(scores[:3], 1):
                     announcement += f"{i}. {name}: {user_score:.2f} points\n"
                 
-                for channel_id in self.ranked_channels:
-                    channel = self.bot.get_channel(channel_id)
-                    if channel:
-                        await channel.send(announcement)
+                channel = self.bot.get_channel(CHANNEL_ID)
+                if channel:
+                    await channel.send(announcement)
+                else:
+                    logger.info("Tried to send weekly announcement, but failed to find channel.")
                 
                 # Reset weekly scores
                 self.db.reset_weekly_scores()
