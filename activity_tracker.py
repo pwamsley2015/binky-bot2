@@ -1,6 +1,5 @@
 from database import Database
-import datetime
-from datetime import timedelta
+from datetime import datetime, timedelta
 from backports.zoneinfo import ZoneInfo
 import discord
 from discord.ext import commands, tasks
