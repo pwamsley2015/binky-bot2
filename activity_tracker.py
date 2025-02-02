@@ -8,9 +8,9 @@ import logging
 import random
 
 logger = logging.getLogger('binky.activity')
+CHANNEL_ID = 801236490524164137 #goal-check-ins
 
 class ActivityTracker:
-    CHANNEL_ID = 801236490524164137 #goal-check-ins
     def __init__(self, bot: commands.Bot):
         self.bot = bot
         self.db = Database()
