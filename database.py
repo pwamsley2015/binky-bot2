@@ -147,7 +147,7 @@ class Database:
 
     def record_weekly_winner(self, user_id: int, score: float) -> None:
         """Record a weekly winner."""
-        week_start = date.today() - datetime.timedelta(days=7)
+        week_start = date.today() - timedelta(days=7)
         week_end = date.today()
         
         with sqlite3.connect(self.db_path) as conn:
