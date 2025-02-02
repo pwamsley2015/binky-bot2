@@ -1,5 +1,5 @@
 import sqlite3
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from typing import Optional, List, Tuple
 import os
 import logging
